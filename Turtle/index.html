@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Turtle Graphics</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-gray-100 p-4">
+    <div class="container mx-auto max-w-6xl">
+        <h1 class="text-3xl font-bold text-center mb-6">Turtle Graphics</h1>
+        
+        <div class="flex flex-col lg:flex-row gap-6">
+            <!-- Canvas Area -->
+            <div class="flex-1 bg-white rounded-lg shadow-md p-4">
+                <canvas id="turtleCanvas" class="w-full h-96 border border-gray-300 rounded"></canvas>
+            </div>
+            
+            <!-- Command Area -->
+            <div class="lg:w-1/3 bg-white rounded-lg shadow-md p-4">
+                <h2 class="text-xl font-semibold mb-3">Commands</h2>
+                <textarea id="commandInput" class="w-full h-64 p-2 border border-gray-300 rounded resize-none mb-4 font-mono" placeholder="Enter commands here...
+Example:
+pen down
+color 255,0,0
+move 100
+rotate 90
+move 100"></textarea>
+                
+                <div class="flex gap-2 mb-4">
+                    <button id="runBtn" class="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded">Run</button>
+                    <button id="resetBtn" class="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded">Reset</button>
+                    <button id="helpBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded">Help</button>
+                    <button id="saveBtn" class="bg-purple-500 hover:bg-purple-600 text-white font-medium py-2 px-4 rounded">Save</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Help Modal -->
+        <div id="helpModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center">
+            <div class="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-2xl max-h-[80vh] overflow-y-auto">
+                <h2 class="text-2xl font-bold mb-4">Turtle Graphics Commands</h2>
+                <ul class="list-disc pl-5 space-y-2">
+                    <li><strong>pen up</strong> - Lifts the pen (stops drawing)</li>
+                    <li><strong>pen down</strong> - Puts the pen down (starts drawing)</li>
+                    <li><strong>color [RGB]</strong> - Sets the drawing color (e.g., color 255,0,0 for red)</li>
+                    <li><strong>move [distance]</strong> - Moves the turtle forward by the specified distance</li>
+                    <li><strong>rotate [angle]</strong> - Rotates the turtle (negative angle for counterclockwise)</li>
+                </ul>
+                <div class="mt-6 text-center">
+                    <button id="closeHelp" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="turtle.js"></script>
+</body>
+</html> 

@@ -1,0 +1,21 @@
+/* Additional custom styles beyond Tailwind */
+
+#turtleCanvas {
+    background-color: white;
+}
+
+.turtle {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    transform-origin: center;
+    pointer-events: none;
+}
+
+#helpModal {
+    z-index: 999;
+}
+
+#helpModal.hidden {
+    display: none;
+} 

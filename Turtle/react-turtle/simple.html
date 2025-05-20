@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Turtle Graphics</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        @media (min-width: 768px) {
+            .container {
+                flex-direction: row;
+            }
+        }
+        .canvas-container {
+            flex: 2;
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .controls {
+            flex: 1;
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-left: 0;
+        }
+        @media (min-width: 768px) {
+            .controls {
+                margin-left: 20px;
+                margin-bottom: 0;
+            }
+        }
+        canvas {
+            width: 100%;
+            height: 400px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 8px;
+            font-family: monospace;
+        }
+        .buttons {
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+        }
+        .run-btn { background-color: #4CAF50; }
+        .reset-btn { background-color: #f44336; }
+        .help-btn { background-color: #2196F3; }
+        .save-btn { background-color: #9C27B0; }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        h1, h2 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="canvas-container">
+            <h1>Turtle Graphics</h1>
+            <canvas id="turtleCanvas"></canvas>
+        </div>
+        <div class="controls">
+            <h2>Commands</h2>
+            <textarea id="commandInput" placeholder="Enter commands here...
+Example:
+pen down
+color 255,0,0
+move 100
+rotate 90
+move 100"></textarea>
+            <div class="buttons">
+                <button id="runBtn" class="run-btn">Run</button>
+                <button id="resetBtn" class="reset-btn">Reset</button>
+                <button id="helpBtn" class="help-btn">Help</button>
+                <button id="saveBtn" class="save-btn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <h2>Turtle Graphics Commands</h2>
+            <ul>
+                <li><strong>pen up</strong> - 펜을 올려 그리기를 중지합니다</li>
+                <li><strong>pen down</strong> - 펜을 내려 그리기를 시작합니다</li>
+                <li><strong>color [RGB]</strong> - 그리기 색상을 설정합니다 (예: color 255,0,0 - 빨간색)</li>
+                <li><strong>move [거리]</strong> - 거북이를 지정된 거리만큼 앞으로 이동시킵니다</li>
+                <li><strong>rotate [각도]</strong> - 거북이를 회전시킵니다 (음수 각도는 시계 반대 방향)</li>
+            </ul>
+            <button id="closeHelpBtn" style="background-color: #666;">닫기</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM 요소 가져오기
+            const canvas = document.getElementById('turtleCanvas');
+            const ctx = canvas.getContext('2d');
+            const commandInput = document.getElementById('commandInput');
+            const runBtn = document.getElementById('runBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const helpBtn = document.getElementById('helpBtn');
+            const saveBtn = document.getElementById('saveBtn');
+            const helpModal = document.getElementById('helpModal');
+            const closeHelpBtn = document.getElementById('closeHelpBtn');
+
+            // 캔버스 크기 설정
+            function resizeCanvas() {
+                canvas.width = canvas.parentElement.clientWidth - 2; // 테두리 감안
+                canvas.height = 400;
+            }
+
+            // 거북이 이미지 생성
+            const turtleImg = new Image();
+            turtleImg.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTM2MC45IDI3NC44QzM3Ni45IDI0Ni4xIDM4MSAyMTAgMzcwLjYgMTc2LjlDMzYwLjIgMTQzLjggMzM1LjUgMTE2LjQgMzA0LjUgMTAyLjNDMjczLjUgODguMiAyMzcuMyA4OC4xIDIwNi4yIDAuOUMxNzUuMSA5Ny40IDE2NiAxMzIgMTYzLjkgMTcxLjJDMTYxLjcgMjEwLjMgMTY2LjQgMjU0IDE4NS40IDI4NC4zQzIwNC40IDMxNC42IDIzNy43IDMzMS41IDI3MS45IDMzOC42QzMwNi4xIDM0NS42IDM0NC45IDM0Mi43IDM2MC45IDI3NC44WiIgZmlsbD0iIzM4QjI3RiIvPjxwYXRoIGQ9Ik0yMzcuNCAyMjAuMUMyMjkuNiAyMTYuMiAyMjAuNSAyMTkuNCAyMTYuNiAyMjcuMkMyMTIuNyAyMzUgMjE1LjkgMjQ0LjEgMjIzLjcgMjQ4QzIzMS41IDI1MS45IDI0MC42IDI0OC43IDI0NC41IDI0MC45QzI0OC40IDIzMy4xIDI0NS4yIDIyNCAyMzcuNCAyMjAuMVoiIGZpbGw9ImJsYWNrIi8+PHBhdGggZD0iTTI3NC44IDIyMC4xQzI2NyAyMTYuMiAyNTcuOSAyMTkuNCAyNTQgMjI3LjJDMjUwLjEgMjM1IDI1My4zIDI0NC4xIDI2MS4xIDI0OEMyNjguOSAyNTEuOSAyNzggMjQ4LjcgMjgxLjkgMjQwLjlDMjg1LjggMjMzLjEgMjgyLjYgMjI0IDI3NC44IDIyMC4xWiIgZmlsbD0iYmxhY2siLz48cGF0aCBkPSJNMjQzLjUgMjY5LjRDMjQzLjUgMjY5LjQgMjQ0LjQgMjc1LjkgMjU1LjkgMjc1LjlDMjY3LjQgMjc1LjkgMjY4LjMgMjY5LjQgMjY4LjMgMjY5LjRIMjQzLjVaIiBmaWxsPSJibGFjayIvPjxwYXRoIGQ9Ik0xNjMuOCAxNzEuM0MxNjQuNSA4My40IDIzMC4xIC0zNS4zIDM1Mi42IDkuOUMzNDguNiAyNi4yIDM1NC42IDQyLjMgMzQ3LjQgNTcuNUMzNDAuMiA3Mi43IDMxOCA4NyAyOTUuNCA5M0MyNzIuOCA5OSAyNDkuOSA5Ni42IDIzMS4xIDk2LjZDMjEyLjIgOTYuNiAxOTcuNCA5OS45IDE4MC45IDExMC40QzE2NC40IDEyMSAxNDYuMiAxMzkgMTM5LjcgMTYxLjhDMTMzLjIgMTg0LjYgMTM4LjMgMjEyLjMgMTUzLjIgMjMxLjlDMTY4LjEgMjUxLjUgMTkzIDI2MyAyMTguNiAyNjkuMUMyNDQuMiAyNzUuMSAyNzEuMyAyNzUuNyAyOTYuOSAyNzIuOUMzMjIuNSAyNzAuMSAzNDcuMyAyNjMuOSAzNjcuOCAyNTIuN0MzODguMyAyNDEuNSA0MDQuNiAyMjUuNCA0MTAuOCAyMDUuM0M0MTcgMTg1LjIgNDEzLjMgMTYxLjEgMzk4LjQgMTQ0LjdDMzgzLjUgMTI4LjMgMzU3LjQgMTE5LjYgMzM0LjQgMTA5LjlDMzQ5LjcgMTExLjEgMzY0LjQgMTE2LjQgMzc3LjQgMTI1LjJDMzkwLjQgMTM0IDQwMS42IDE0Ni4zIDQwOS4yIDE2MC44QzQxNi44IDE3NS4zIDQyMC45IDE5Mi4xIDQyMCAyMDguOEM0MTkuMSAyMjUuNSA0MTMuMiAyNDIgNDAyLjQgMjU0LjhDMzkxLjUgMjY3LjYgMzc1LjYgMjc2LjcgMzU3LjkgMjgxLjVDMzQwLjIgMjg2LjMgMzIwLjYgMjg2LjggMzAyLjYgMjg0LjVDMjg0LjcgMjgyLjIgMjY4LjMgMjc3LjIgMjUzLjYgMjcwLjRDMjM4LjggMjYzLjYgMjI1LjYgMjU1IDIxNSAyNDMuNkMyMDQuNCwyMzIuMyAxOTYuMyAyMTguMSAxOTIuMiAyMDIuM0MxODggMTg2LjUgMTg3LjYgMTY5IDE5Mi42IDE1My4xQzE5Ny42IDEzNy4yIDIwOC4yIDEyMyAyMjIuOCAxMTMuNUMyMzcuNSAxMDMuOSAyNTYuMiA5OS4xIDI3NC43IDk5QzI5My4zIDk4LjkgMzExLjkgMTAzLjQgMzI3LjcgMTEzQzM0My41IDEyMi42IDM1Ni41IDEzNy41IDM2Mi45IDE1Ni4xQzM2OS4zIDE3NC43IDM2OS4xIDE5NyAzNjIuNCAyMTUuNEMzNTUuNiAyMzMuOCAzNDIuMyAyNDguNiAzMjYuMSAyNTcuOUMzMDkuOSAyNjcuMiAyOTAuOSAyNzEgMjcyLjQgMjY5LjlDMjUzLjkgMjY4LjkgMjM2IDI2MyAyMjEuMyAyNTIuM0MyMDYuNiAyNDEuNiAxOTUuMSAyMjYgMTg5LjMgMjA3LjlDMTgzLjQgMTg5LjggMTgzLjIgMTY5LjEgMTg4LjYgMTUwLjlDMTk0IDE2Ni45IDIwNS4xIDE4MC40IDIxOS4yIDE4OS41QzIzMy40IDE5OC42IDI1MC40IDIwMy4yIDI2Ni43IDIwMi45QzI4MyAyMDIuNiAyOTguOCAxOTcuNiAzMTIgMTkwQzMyNS4yIDE4Mi4zIDMzNSAxNzIgMzQxLjMgMTU5LjZDMzM5LjEgMTY0LjQgMzM2LjEgMTY4LjkgMzMyLjYgMTczQzMyOS4xIDE3Ny4xIDMyNS4xIDE4MC44IDMyMC44IDE4NC4xQzMxNi41IDE4Ny40IDMxMS44IDE5MC4yIDMwNi45IDE5Mi42QzMwMiAxOTUgMjk2LjkgMTk3IDE5MS43IDE0Ny45QzE4My4xIDE0OS4xIDE3NS41IDE1NC42IDE3MS44IDE2Mi43QzE2OCAxNzAuOCAxNjguNiAxODAgMTc0IDE4Ny40QzE1OS4yIDE4MS4yIDE1MC41IDE2NC44IDE2My44IDE3MS4zWiIgZmlsbD0iIzExNDQyOCIvPjwvc3ZnPg==';
+
+            // 거북이 상태 초기화
+            let turtle = {
+                x: 0,
+                y: 0,
+                angle: 0, // 각도, 0은 오른쪽을 향함
+                penDown: false,
+                color: 'black',
+                penSize: 2
+            };
+
+            // 첫 실행인지 추적하는 플래그
+            let isFirstExecution = true;
+
+            // 거북이 상태 재설정
+            function resetTurtle() {
+                turtle = {
+                    x: canvas.width / 2,
+                    y: canvas.height / 2,
+                    angle: 0,
+                    penDown: false,
+                    color: 'black',
+                    penSize: 2
+                };
+            }
+
+            // 캔버스 지우기
+            function clearCanvas() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+
+            // 거북이 그리기
+            function drawTurtle() {
+                ctx.save();
+                ctx.translate(turtle.x, turtle.y);
+                ctx.rotate(turtle.angle * Math.PI / 180);
+                ctx.drawImage(turtleImg, -16, -16, 32, 32);
+                ctx.restore();
+            }
+
+            // 명령어 실행
+            function executeCommands() {
+                // 첫 실행인 경우에만 거북이 위치 초기화
+                if (isFirstExecution) {
+                    resetTurtle();
+                    isFirstExecution = false;
+                }
+                
+                const commands = commandInput.value.trim().split('\n');
+                
+                for (const cmd of commands) {
+                    const parts = cmd.trim().toLowerCase().split(' ');
+                    if (parts.length === 0 || parts[0] === '') continue;
+                    
+                    const command = parts[0];
+                    
+                    switch (command) {
+                        case 'pen':
+                            if (parts[1] === 'up') {
+                                turtle.penDown = false;
+                            } else if (parts[1] === 'down') {
+                                turtle.penDown = true;
+                            }
+                            break;
+                        
+                        case 'color':
+                            if (parts.length >= 2) {
+                                const colorParts = parts.slice(1).join(' ').split(',');
+                                if (colorParts.length === 3) {
+                                    const [r, g, b] = colorParts.map(c => parseInt(c.trim()));
+                                    turtle.color = `rgb(${r}, ${g}, ${b})`;
+                                }
+                            }
+                            break;
+                        
+                        case 'move':
+                            if (parts.length >= 2) {
+                                const distance = parseFloat(parts[1]);
+                                if (!isNaN(distance)) {
+                                    const radians = turtle.angle * Math.PI / 180;
+                                    const newX = turtle.x + distance * Math.cos(radians);
+                                    const newY = turtle.y + distance * Math.sin(radians);
+                                    
+                                    if (turtle.penDown) {
+                                        ctx.beginPath();
+                                        ctx.moveTo(turtle.x, turtle.y);
+                                        ctx.lineTo(newX, newY);
+                                        ctx.strokeStyle = turtle.color;
+                                        ctx.lineWidth = turtle.penSize;
+                                        ctx.stroke();
+                                    }
+                                    
+                                    turtle.x = newX;
+                                    turtle.y = newY;
+                                }
+                            }
+                            break;
+                        
+                        case 'rotate':
+                            if (parts.length >= 2) {
+                                const angle = parseFloat(parts[1]);
+                                if (!isNaN(angle)) {
+                                    turtle.angle += angle;
+                                }
+                            }
+                            break;
+                    }
+                }
+                
+                drawTurtle();
+            }
+
+            // 이벤트 리스너
+            runBtn.addEventListener('click', executeCommands);
+            
+            resetBtn.addEventListener('click', () => {
+                clearCanvas();
+                resetTurtle();
+                drawTurtle();
+                commandInput.value = '';
+                isFirstExecution = true;
+            });
+            
+            helpBtn.addEventListener('click', () => {
+                helpModal.style.display = 'flex';
+            });
+            
+            closeHelpBtn.addEventListener('click', () => {
+                helpModal.style.display = 'none';
+            });
+            
+            saveBtn.addEventListener('click', () => {
+                const link = document.createElement('a');
+                link.download = 'turtle-drawing.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+
+            // 초기화
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+            resetTurtle();
+            drawTurtle();
+        });
+    </script>
+</body>
+</html> 
